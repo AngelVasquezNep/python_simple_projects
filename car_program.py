@@ -1,32 +1,38 @@
 
-def card_engine():
+def car_engine():
+    """Console program to control a car engine."""
 
     command = ""
     last_command = ""
 
     prevent_duplicate_action = {'start', 'stop'}
 
-    def command_was_launched(command, last_command):
+    def command_was_triggered(command, last_command):
+        """To know if some command was triggered to prevent re-trigger it"""
         return command == last_command and command in prevent_duplicate_action
 
     def show_status(last_command):
+        """To show engine's status"""
+
         if last_command == "start":
-            print("The card was started")
+            print("The car was started")
         elif last_command == "stop":
-            print("The card was stoped")
+            print("The car was stoped")
         else:
             print("Without last status")
 
     def show_last_command(command):
+        """To use when the same command was trigger"""
+
         if command == "start":
-            print("Card is already started")
+            print("car is already started")
         if command == "stop":
-            print("Card is already stoped")
+            print("car is already stoped")
 
     def show_help():
         print("""
-    start   - To start the card
-    stop    - To stop the card
+    start   - To start the car
+    stop    - To stop the car
     status  - To display last command
     exit    - To exit
           """)
@@ -34,16 +40,16 @@ def card_engine():
     while True:
         command = input('> ').lower()
 
-        if command_was_launched(command, last_command):
+        if command_was_triggered(command, last_command):
             show_last_command(command)
 
         elif command == "start":
             last_command = command
-            print("Card start...")
+            print("car start...")
 
         elif command == "stop":
             last_command = command
-            print("Card stop...")
+            print("car stop...")
 
         elif command == "status":
             show_status(last_command)
@@ -60,4 +66,4 @@ def card_engine():
 
 
 if __name__ == "__main__":
-    card_engine()
+    car_engine()
