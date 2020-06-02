@@ -32,21 +32,20 @@ class Users:
 
             print("User {} was added successfully!".format(full_name))
 
-    def _print_users(self, users):
+    def _print_user(self, user):
         """To show a list of users
-        
+
         Args:
-            users: list of users
+            user: An user
         """
 
-        for user in users:
-            user_info = "Id: {id} | Full Name: {full_name} | Age: {age} | created_at: {created_at}".format(
-                **user)
+        user_info = "Id: {id} | Full Name: {full_name} | Age: {age} | created_at: {created_at}".format(
+            **user)
 
-            print("*" * len(user_info))
-            print(user_info)
-            print("*" * len(user_info))
-            print('\n')
+        print("*" * len(user_info))
+        print(user_info)
+        print("*" * len(user_info))
+        print('\n')
 
     def get_all_active_users(self):
         """To get all active users (without deleted_at value)"""
@@ -55,12 +54,18 @@ class Users:
             print("No users yet")
 
         else:
-            self._print_users(
-                [user for user in self.users if user['deleted_at'] is None])
+            for user in self.users:
+                if (user['deleted_at'] is None):
+                    self._print_user(user)
+
+    def get_all_users(self):
+        for index, user in enumerate(self.users):
+            print(f"{index}:")
+            self._print_user(user)
 
     def get_user_by_id(self, user_id):
         """To get an user by its id
-        
+
         Args:
             user_id: An valid user id
         Raises:
@@ -113,6 +118,9 @@ class Users:
             elif command == "delete":
                 user_id = int(input(">User id "))
                 self.delete_user(user_id)
+
+            elif command == "all_active":
+                self.get_all_users()
 
             elif command == "all":
                 self.get_all_active_users()
