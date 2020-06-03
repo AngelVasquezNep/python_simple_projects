@@ -68,16 +68,37 @@ class Users:
 
         Args:
             user_id: An valid user id
-        Raises:
-            IndexError for non-existent user
+        Returns:
+            an user object
         """
 
-        try:
-            c = [user for user in self.users if user['id'] == user_id]
+        for user in self.users:
+            if user['id'] == user_id:
+                return user
 
-            return c[0]
-        except IndexError:
-            return "User {} doesn't exist".format(user_id)
+        return "User {} doesn't exist".format(user_id)
+
+    def search(self, query):
+        """To search users by some query
+
+        Args:
+            query: an string
+        Returns:
+            list of users
+        """
+
+        queries = list(map(lambda q: q.strip().lower(), query.split()))
+        normalize_users = list(map(
+            lambda u: {**u, "full_name": u['full_name'].lower(), 'age': str(u['age'])}, self.users))
+
+        results = []
+
+        for query in queries:
+            for user in normalize_users:
+                if query in user['full_name'] or query in user['age']:
+                    results.append(user)
+
+        return results
 
     def delete_user(self, user_id):
         """Delete some user by its id
@@ -107,7 +128,7 @@ class Users:
         """Use to start the program"""
 
         while True:
-            command = input("> ").lower()
+            command = input("> ").lower().strip()  # To remove white spaces
 
             if command == "raw":
                 print(self.users)
@@ -128,6 +149,16 @@ class Users:
             elif command == "get":
                 user_id = int(input(">User id "))
                 print(self.get_user_by_id(user_id))
+
+            elif command == "search":
+                query = input("> ")
+                results = self.search(query)
+
+                if len(results) > 0:
+                    for user in results:
+                        self._print_user(user)
+                else:
+                    print("Zero results. Try with another search.")
 
             elif command == "help":
                 print(self.get_options())
