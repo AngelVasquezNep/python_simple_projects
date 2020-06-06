@@ -1,4 +1,8 @@
+import csv
+import os
 import time
+
+USER_SCHEMA = ['id', 'full_name', 'age', 'created_at', 'deleted_at']
 
 
 class Users:
@@ -7,8 +11,24 @@ class Users:
     Each user has an incremental id, created_at and deleted_at value
     """
 
-    def __init__(self):
+    def __init__(self, user_table_name=".user_table.csv"):
+        self._user_table_name = user_table_name
         self.users = []
+
+        with open(user_table_name, mode='r') as f:
+            reader = csv.DictReader(f, fieldnames=USER_SCHEMA)
+
+            for row in reader:
+                self.users.append(row)
+
+    def _save_users_to_storage(self):
+        tmp_user_table = '{}.tmp'.format(self._user_table_name)
+        with open(tmp_user_table, mode ="w") as f:
+            writer = csv.DictWriter(f, fieldnames=USER_SCHEMA)
+            writer.writerows(self.users)
+
+            os.remove(self._user_table_name)
+            os.rename(tmp_user_table, self._user_table_name)
 
     def register_a_new_user(self):
         """To add a new user"""
@@ -27,7 +47,7 @@ class Users:
 
             created_at = time.gmtime()
 
-            self.users.append({"id": last_id + 1, "deleted_at": None,
+            self.users.append({"id": int(last_id) + 1, "deleted_at": None,
                                "created_at": time.asctime(created_at), **user})
 
             print("User {} was added successfully!".format(full_name))
@@ -55,7 +75,7 @@ class Users:
 
         else:
             for user in self.users:
-                if (user['deleted_at'] is None):
+                if not user['deleted_at']:
                     self._print_user(user)
 
     def get_all_users(self):
@@ -164,6 +184,7 @@ class Users:
                 print(self.get_options())
 
             elif command == "exit":
+                self._save_users_to_storage()
                 print("Bye")
                 break
 
