@@ -2,7 +2,8 @@ import csv
 import os
 import time
 
-USER_SCHEMA = ['id', 'full_name', 'age', 'created_at', 'deleted_at']
+USER_SCHEMA = ['id', 'full_name', 'age',
+               'created_at', 'deleted_at', 'email', 'telephone']
 
 
 class Users:
@@ -23,32 +24,43 @@ class Users:
 
     def _save_users_to_storage(self):
         tmp_user_table = '{}.tmp'.format(self._user_table_name)
-        with open(tmp_user_table, mode ="w") as f:
+        with open(tmp_user_table, mode="w") as f:
             writer = csv.DictWriter(f, fieldnames=USER_SCHEMA)
             writer.writerows(self.users)
 
             os.remove(self._user_table_name)
             os.rename(tmp_user_table, self._user_table_name)
 
-    def register_a_new_user(self):
-        """To add a new user"""
-
+    def _capture_user_info(self):
         print("User info")
         full_name = input("Fullname: ")
         age = int(input("Age: "))
+        email = input("Email: ")
+        telephone = input("Telephone: ")
 
-        user = {"full_name": full_name, "age": age}
+        return (full_name, age, email, telephone)
 
-        if user in self.users:
-            print("User {} already exists".format(full_name))
+    def register_a_new_user(self):
+        """To add a new user"""
+
+        full_name, age, email, telephone = self._capture_user_info()
+
+        if email in [user['email'] for user in self.users]:
+            print("{} has already been added".format(email))
         else:
             last_user = self.users[-1] if len(self.users) > 0 else dict()
             last_id = last_user['id'] if 'id' in last_user else 0
 
             created_at = time.gmtime()
 
-            self.users.append({"id": int(last_id) + 1, "deleted_at": None,
-                               "created_at": time.asctime(created_at), **user})
+            self.users.append({"id": int(last_id) + 1,
+                               "full_name": full_name,
+                               "age": age,
+                               "created_at": time.asctime(created_at),
+                               "deleted_at": None,
+                               "email": email,
+                               "telephone": telephone
+                               })
 
             print("User {} was added successfully!".format(full_name))
 
@@ -137,40 +149,49 @@ class Users:
 
     def get_options(self):
         return """
-    add     - To add a new User
-    all     - To see all users
-    delete  - To delete some user
-    search  - To serch some user
-    exit    - To exit
+    [A]dd         - To add a new User
+    [L]ist        - To list all active users
+    [D]elete      - To delete some user
+    [S]earch      - To serch some user
+    [F]ind by id  - To serch some user
+    exit          - To exit
         """
 
     def run(self):
         """Use to start the program"""
 
+        print(
+            '-' * 40 + '\n'
+            "Welcome to user manager " + '\n'
+            "You can: " + '\n' +
+            self.get_options() + '\n' +
+            '-' * 40
+        )
         while True:
+
             command = input("> ").lower().strip()  # To remove white spaces
 
             if command == "raw":
                 print(self.users)
 
-            elif command == "add":
+            elif command == "a":
                 self.register_a_new_user()
 
-            elif command == "delete":
+            elif command == "d":
                 user_id = int(input(">User id "))
                 self.delete_user(user_id)
 
             elif command == "all_active":
                 self.get_all_users()
 
-            elif command == "all":
+            elif command == "l":
                 self.get_all_active_users()
 
-            elif command == "get":
+            elif command == "f":
                 user_id = int(input(">User id "))
                 print(self.get_user_by_id(user_id))
 
-            elif command == "search":
+            elif command == "s":
                 query = input("> ")
                 results = self.search(query)
 
@@ -190,6 +211,9 @@ class Users:
 
             else:
                 print("We don't understand, try with 'help' command")
+                print("*" * 30)
+                print(self.get_options())
+                print("*" * 30)
 
 
 if __name__ == "__main__":
