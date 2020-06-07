@@ -14,15 +14,18 @@ class Users:
 
     def __init__(self, user_table_name=".user_table.csv"):
         self._user_table_name = user_table_name
-        self.users = []
+        self.users = list(self.load_saved_users())
 
-        with open(user_table_name, mode='r') as f:
-            reader = csv.DictReader(f, fieldnames=USER_SCHEMA)
+    def load_saved_users(self):
+
+        with open(self._user_table_name, mode='r') as f:
+            reader = self._format_storage(
+                csv.DictReader(f, fieldnames=USER_SCHEMA))
 
             for row in reader:
-                self.users.append(row)
+                yield row
 
-    def _save_users_to_storage(self):
+    def save_users_to_storage(self):
         tmp_user_table = '{}.tmp'.format(self._user_table_name)
         with open(tmp_user_table, mode="w") as f:
             writer = csv.DictWriter(f, fieldnames=USER_SCHEMA)
@@ -40,6 +43,12 @@ class Users:
 
         return (full_name, age, email, telephone)
 
+    def _format_storage(self, generator):
+        for row in generator:
+            row['id'] = int(row['id'])
+            row['age'] = int(row['age'])
+            yield row
+
     def register_a_new_user(self):
         """To add a new user"""
 
@@ -53,7 +62,7 @@ class Users:
 
             created_at = time.gmtime()
 
-            self.users.append({"id": int(last_id) + 1,
+            self.users.append({"id": last_id + 1,
                                "full_name": full_name,
                                "age": age,
                                "created_at": time.asctime(created_at),
@@ -61,23 +70,41 @@ class Users:
                                "email": email,
                                "telephone": telephone
                                })
+            self.save_users_to_storage()
 
             print("User {} was added successfully!".format(full_name))
 
+    def update_user(self, user_id):
+        user = self.get_user(user_id)
+
+        full_name, age, email, telephone = self._capture_user_info()
+
+        new_user = {
+            **user,
+            "full_name": full_name,
+            "age": age,
+            "email": email,
+            "telephone": telephone,
+        }
+
+        user_index = self.users.index(user)
+
+        self.users[user_index] = new_user
+        self.save_users_to_storage()
+
     def _print_user(self, user):
-        """To show a list of users
+        div = " | "
 
-        Args:
-            user: An user
-        """
+        user_info = div.join([
+            "Id: {id}",
+            "Full Name: {full_name}",
+            "Age: {age}",
+            "Email: {email}",
+            "Telephone: {telephone}",
+            "Created at: {created_at}"]).format(**user)
 
-        user_info = "Id: {id} | Full Name: {full_name} | Age: {age} | created_at: {created_at}".format(
-            **user)
-
-        print("*" * len(user_info))
         print(user_info)
         print("*" * len(user_info))
-        print('\n')
 
     def get_all_active_users(self):
         """To get all active users (without deleted_at value)"""
@@ -95,7 +122,7 @@ class Users:
             print(f"{index}:")
             self._print_user(user)
 
-    def get_user_by_id(self, user_id):
+    def get_user(self, user_id):
         """To get an user by its id
 
         Args:
@@ -107,8 +134,6 @@ class Users:
         for user in self.users:
             if user['id'] == user_id:
                 return user
-
-        return "User {} doesn't exist".format(user_id)
 
     def search(self, query):
         """To search users by some query
@@ -138,26 +163,28 @@ class Users:
             user_id: A valid user id
         """
 
-        user = self.get_user_by_id(user_id)
+        user = self.get_user(user_id)
 
-        if 'id' in user:
-            userIndex = self.users.index(user)
-            deleted_at = time.gmtime()
+        user_index = self.users.index(user)
+        deleted_at = time.gmtime()
 
-            self.users[userIndex]['deleted_at'] = time.asctime(deleted_at)
-            print("{} was deleted".format(user['full_name']))
+        self.users[user_index]['deleted_at'] = time.asctime(deleted_at)
+        print("{} was deleted".format(user['full_name']))
+
+        self.save_users_to_storage()
 
     def get_options(self):
         return """
     [A]dd         - To add a new User
     [L]ist        - To list all active users
-    [D]elete      - To delete some user
+    [U]padte      - To updadte an user
+    [D]elete      - To delete an user
     [S]earch      - To serch some user
-    [F]ind by id  - To serch some user
+    [F]ind        - To find an user by id
     exit          - To exit
         """
 
-    def run(self):
+    def run_as_console_program(self):
         """Use to start the program"""
 
         print(
@@ -167,6 +194,7 @@ class Users:
             self.get_options() + '\n' +
             '-' * 40
         )
+
         while True:
 
             command = input("> ").lower().strip()  # To remove white spaces
@@ -176,6 +204,10 @@ class Users:
 
             elif command == "a":
                 self.register_a_new_user()
+
+            elif command == "u":
+                user_id = int(input('>User id '))
+                self.update_user(user_id)
 
             elif command == "d":
                 user_id = int(input(">User id "))
@@ -189,7 +221,12 @@ class Users:
 
             elif command == "f":
                 user_id = int(input(">User id "))
-                print(self.get_user_by_id(user_id))
+                user = self.get_user(user_id)
+
+                if user:
+                    print(self.get_user(user_id))
+                else:
+                    print("User doesn't exist")
 
             elif command == "s":
                 query = input("> ")
@@ -205,7 +242,6 @@ class Users:
                 print(self.get_options())
 
             elif command == "exit":
-                self._save_users_to_storage()
                 print("Bye")
                 break
 
@@ -218,4 +254,4 @@ class Users:
 
 if __name__ == "__main__":
     users = Users()
-    users.run()
+    users.run_as_console_program()
