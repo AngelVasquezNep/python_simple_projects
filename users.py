@@ -197,7 +197,10 @@ class Users:
 
         while True:
 
-            command = input("> ").lower().strip()  # To remove white spaces
+            command = None
+
+            while not command: 
+                command = input("> ").lower().strip()  # To remove white spaces
 
             if command == "raw":
                 print(self.users)
@@ -247,9 +250,10 @@ class Users:
 
             else:
                 print("We don't understand, try with 'help' command")
-                print("*" * 30)
+                print('\n')
+                print("*" * 40)
                 print(self.get_options())
-                print("*" * 30)
+                print("*" * 40)
 
 
 if __name__ == "__main__":
